@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Video Wall Controller</title>
+  <style>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: sans-serif;
+      padding: 2em;
+      text-align: center;
+    }
+
+    input, button {
+      margin: 0.5em;
+      padding: 0.5em 1em;
+      font-size: 1em;
+    }
+
+    .status {
+      margin-top: 1em;
+      font-weight: bold;
+    }
+
+    .connected {
+      color: #6f6;
+    }
+
+    .disconnected {
+      color: #f66;
+    }
+
+    #controls {
+      margin-top: 1.5em;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎛️ Video Wall Controller</h1>
+
+  <div>
+    <label for="ip">Controller IP:</label>
+    <input type="text" id="ip" placeholder="192.168.20.10" />
+    <button id="connectBtn" onclick="toggleConnection()">Connect</button>
+  </div>
+
+  <div id="controls">
+    <button onclick="sendCommand('play')">▶️ Play</button>
+    <button onclick="sendCommand('pause')">⏸️ Pause</button>
+    <button onclick="sendCommand('stop')">⏹️ Stop</button>
+    <button onclick="sendCommand('reload')">🔄 Reload</button>
+    <button onclick="sendCommand('sync')">🕒 Sync</button>
+  </div>
+
+  <div id="status" class="status disconnected">🔴 Disconnected</div>
+
+  <script>
+    let ws = null;
+    let connected = false;
+
+    function toggleConnection() {
+      if (connected) {
+        ws.close();
+        return;
+      }
+
+      const ip = document.getElementById('ip').value.trim();
+      if (!ip) return alert("Please enter an IP address.");
+
+      ws = new WebSocket(`ws://${ip}:12345`);
+
+      ws.onopen = () => {
+        connected = true;
+        updateUI(true);
+      };
+
+      ws.onclose = () => {
+        connected = false;
+        updateUI(false);
+      };
+
+      ws.onerror = (err) => {
+        console.error("WebSocket error:", err);
+        connected = false;
+        updateUI(false);
+      };
+    }
+
+    function updateUI(state) {
+      const statusEl = document.getElementById("status");
+      const button = document.getElementById("connectBtn");
+      const controls = document.getElementById("controls");
+
+      if (state) {
+        statusEl.innerText = "🟢 Connected";
+        statusEl.className = "status connected";
+        button.innerText = "Disconnect";
+        controls.style.display = "block";
+      } else {
+        statusEl.innerText = "🔴 Disconnected";
+        statusEl.className = "status disconnected";
+        button.innerText = "Connect";
+        controls.style.display = "none";
+      }
+    }
+
+    function sendCommand(cmd) {
+      if (ws && connected) {
+        ws.send(cmd);
+        document.getElementById('status').innerText = `🟢 Sent: ${cmd}`;
+      } else {
+        alert("WebSocket not connected.");
+      }
+    }
+  </script>
+</body>
+</html>
+
