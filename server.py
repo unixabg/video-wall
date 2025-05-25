@@ -5,6 +5,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import threading
 import re
+import socket
 
 # -------------------------------
 # HTTP Redirect Handler
@@ -16,9 +17,18 @@ class RedirectHandler(SimpleHTTPRequestHandler):
 
         if "hostname" in params:
             host = params["hostname"][0]
-            match = re.match(r"(\d+)-(\d+)-(\d+)-(\d+)", host)
+            match = re.match(r"(\d+)-(\d+)", host)
             if match:
-                row, col, rows, cols = match.groups()
+                row, col = match.groups()
+                # Controller hostname must be in format row-col-rows-cols
+                local_hostname = socket.gethostname()
+                ctrl_match = re.match(r"^\d+-\d+-(\d+)-(\d+)$", local_hostname)
+                if not ctrl_match:
+                    self.send_error(500, f"Controller hostname '{local_hostname}' does not encode grid size")
+                    return
+
+                rows, cols = ctrl_match.groups()
+
                 redirect_url = f"/index.html?part={row},{col}&rows={rows}&cols={cols}"
                 self.send_response(302)
                 self.send_header("Location", redirect_url)
