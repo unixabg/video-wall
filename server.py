@@ -47,7 +47,7 @@ async def ws_handler(ws):
     connected.add(ws)
     try:
         async for message in ws:
-            if message in {"play", "pause", "stop", "reload"}:
+            if message in {"play", "pause", "stop", "reload", "sync"}:
                 await asyncio.gather(*(c.send(message) for c in connected))
     finally:
         connected.remove(ws)

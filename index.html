@@ -66,10 +66,29 @@
         };
 
         socket.onmessage = (event) => {
-            if (event.data === "play") {
-                console.log("Received play signal. Starting video.");
-                video.currentTime = 0;
-                video.play().catch(err => console.error("Playback error:", err));
+            const cmd = event.data;
+            console.log("Received WebSocket command:", cmd);
+
+            switch (cmd) {
+                case "play":
+                    video.currentTime = 0;
+                    video.play().catch(err => console.error("Playback error:", err));
+                    break;
+                case "pause":
+                    video.pause();
+                    break;
+                case "stop":
+                    video.pause();
+                    video.style.display = "none";
+                    break;
+                case "reload":
+                    location.reload();
+                    break;
+                case "sync":
+                    video.currentTime = Math.floor(video.currentTime);
+                    break;
+                default:
+                    console.warn("Unknown command:", cmd);
             }
         };
     </script>
